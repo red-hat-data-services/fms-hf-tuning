@@ -24,7 +24,7 @@ spec:
   - name: git-url
     value: '{{source_url}}'
   - name: output-image
-    value: quay.io/repository/modh/fms-hf-tuning:{{revision}}
+    value: quay.io/modh/fms-hf-tuning:{{revision}}
   - name: path-context
     value: .
   - name: revision
