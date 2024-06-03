@@ -24,7 +24,7 @@ spec:
   - name: git-url
     value: '{{source_url}}'
   - name: output-image
-    value: quay.io/modh/fms-hf-tuning:{{revision}}
+    value: quay.io/modh/fms-hf-tuning:{{target_branch}}
   - name: path-context
     value: .
   - name: revision
@@ -406,6 +406,9 @@ spec:
       params:
       - name: IMAGE
         value: $(tasks.build-container.results.IMAGE_URL)
+      - name: ADDITIONAL_TAGS
+        value: 
+          - '{{target_branch}}-{{revision}}'
       runAfter:
       - build-container
       taskRef:
