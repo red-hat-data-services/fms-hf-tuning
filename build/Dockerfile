@@ -164,5 +164,6 @@ WORKDIR /app
 USER ${USER}
 COPY --from=python-installations /home/${USER}/.local /home/${USER}/.local
 ENV PYTHONPATH="/home/${USER}/.local/lib/python${PYTHON_VERSION}/site-packages"
+RUN pip install transformers==4.40.2
 
 CMD [ "python", "/app/accelerate_launch.py" ]
