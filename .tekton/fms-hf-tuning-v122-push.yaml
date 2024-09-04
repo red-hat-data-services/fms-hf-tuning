@@ -6,8 +6,10 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
-      == "v1.2.2"
+    pipelinesascode.tekton.dev/on-cel-expression:  |
+      event == "pull_request" 
+      && target_branch == "v1.2.2"
+      && ( !".tekton/**".pathChanged() || ".tekton/fms-hf-tuning-v122-push.yaml".pathChanged() )
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: fms-hf-tuning
@@ -22,7 +24,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/rhoai-tenant/fms-hf-tuning/fms-hf-tuning-v122:{{revision}}
+    value: quay.io/modh/fms-hf-tuning:{{target_branch}}
   - name: dockerfile
     value: /build/Dockerfile
   pipelineSpec:
@@ -415,6 +417,9 @@ spec:
       params:
       - name: IMAGE
         value: $(tasks.build-image-index.results.IMAGE_URL)
+      - name: ADDITIONAL_TAGS
+        value: 
+          - '{{target_branch}}-{{revision}}'  
       runAfter:
       - build-image-index
       taskRef:
