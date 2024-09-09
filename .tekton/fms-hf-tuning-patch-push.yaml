@@ -12,7 +12,7 @@ metadata:
     appstudio.openshift.io/application: fms-hf-tuning
     appstudio.openshift.io/component: fms-hf-tuning-patch
     pipelines.appstudio.openshift.io/type: build
-  name: fms-hf-tuning-patch-on-tag-push
+  name: fms-hf-tuning-patch-on-push
   namespace: rhoai-tenant
 spec:
   params:
