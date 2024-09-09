@@ -4,16 +4,15 @@ metadata:
   annotations:
     build.appstudio.openshift.io/repo: https://github.com/red-hat-data-services/fms-hf-tuning?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
-    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    build.appstudio.redhat.com/target_branch: "[refs/tags/*]"
+    pipelinesascode.tekton.dev/on-event: "[push]"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
-      == "main"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: fms-hf-tuning
     appstudio.openshift.io/component: fms-hf-tuning-patch
     pipelines.appstudio.openshift.io/type: build
-  name: fms-hf-tuning-patch-on-push
+  name: fms-hf-tuning-patch-on-tag-push
   namespace: rhoai-tenant
 spec:
   params:
@@ -22,7 +21,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/rhoai-tenant/fms-hf-tuning/fms-hf-tuning-patch:{{revision}}
+    value: quay.io/redhat-user-workloads/rhoai-tenant/fms-hf-tuning/fms-hf-tuning-patch:{{target_branch}}
   - name: dockerfile
     value: build/Dockerfile
   pipelineSpec:
