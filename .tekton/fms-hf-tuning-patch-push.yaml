@@ -4,10 +4,9 @@ metadata:
   annotations:
     build.appstudio.openshift.io/repo: https://github.com/red-hat-data-services/fms-hf-tuning?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
-    build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    build.appstudio.redhat.com/target_branch: "[refs/tags/*]"
+    pipelinesascode.tekton.dev/on-event: "[push]"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
-      == "main"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: fms-hf-tuning
