@@ -17,6 +17,7 @@ metadata:
     pipelines.appstudio.openshift.io/type: build
   name: fms-hf-tuning-release-on-push
   namespace: rhoai-tenant
+# build trigger comment
 spec:
   params:
   - name: dockerfile
