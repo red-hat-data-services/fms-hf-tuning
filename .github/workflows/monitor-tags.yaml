@@ -1,0 +1,41 @@
+name: Monitor Upstream Tags
+
+on:
+  schedule:
+    - cron: "35 * * * *"
+
+jobs:
+  monitor-tags:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: downstream
+          fetch-depth: 0
+
+      - name: Retrieve missing tags
+        run: |
+          git clone "https://github.com/foundation-model-stack/fms-hf-tuning.git" upstream
+          cd upstream
+          upstream_tags=$(git tag --list)
+          cd ../downstream
+          downstream_tags=$(git tag --list)
+
+          for upstream_tag in $upstream_tags; do
+              downstream_tag_found=false
+              for downstream_tag in $downstream_tags; do
+                  if [[ $upstream_tag == $downstream_tag ]]; then
+                      downstream_tag_found=true
+                      echo "downstream tag "$downstream_tag" for corresponding upstream tag found"
+                  fi
+              done
+              if  ! $downstream_tag_found ; then
+                  echo "create downstream tag for "$upstream_tag
+                  gh workflow run push-upstream-tag.yaml --repo red-hat-data-services/fms-hf-tuning \
+                  --ref ${{ github.ref }} \
+                  --field tag_name=$upstream_tag
+              fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
