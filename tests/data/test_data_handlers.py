@@ -16,7 +16,7 @@
 # https://spdx.dev/learn/handling-license-info/
 
 # Third Party
-from datasets import IterableDatasetDict
+from datasets import Dataset, IterableDatasetDict
 from transformers import AutoTokenizer
 import datasets
 import pytest
@@ -35,7 +35,10 @@ from tuning.data.data_handlers import (
     apply_custom_jinja_template,
     combine_sequence,
     duplicate_columns,
+    skip_large_text,
+    tokenize,
 )
+from tuning.data.setup_dataprocessor import is_pretokenized_dataset
 
 
 def test_apply_custom_formatting_template():
@@ -250,3 +253,62 @@ def test_duplicate_columns_copies_columns():
     assert new in first_element
     assert old in first_element
     assert first_element[new] == first_element[old]
+
+
+def test_tokenizer_data_handler_tokenizes():
+    "Ensure tokenizer data handler tokenizes the input properly with proper truncation"
+    d = datasets.load_dataset("json", data_files=TWITTER_COMPLAINTS_DATA_JSONL)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    dataset_text_field = "output"
+    truncation = True
+    max_length = 10
+
+    updated_dataaset = d.map(
+        tokenize,
+        fn_kwargs={
+            "tokenizer": tokenizer,
+            "dataset_text_field": dataset_text_field,
+            "truncation": truncation,
+            "max_length": max_length,
+        },
+    )
+
+    assert "input_ids" in updated_dataaset["train"][0]
+    for element in updated_dataaset["train"]:
+        assert len(element["input_ids"]) <= max_length
+
+
+@pytest.mark.parametrize(
+    "column_name, max_length",
+    [
+        (None, None),
+        ("input_ids", None),
+        (1024, 1024),
+        ("not_existing", "not_existing"),
+    ],
+)
+def test_skip_large_text_handler_throws_error_on_bad_args(column_name, max_length):
+    "Ensure that skip large text handler throws error on bad arguments"
+    d = datasets.load_dataset("json", data_files=TWITTER_COMPLAINTS_DATA_JSONL)
+    fn_kwargs = {}
+    fn_kwargs["column_name"] = column_name
+    fn_kwargs["max_length"] = max_length
+
+    with pytest.raises(ValueError):
+        filtered = d.filter(skip_large_text, fn_kwargs=fn_kwargs)
+
+
+def test_skip_large_text_handler():
+    "Ensure that skip large text handler skips dataset as intended"
+
+    def test_dataset_generator():
+        for i in range(0, 100):
+            yield {"input": list(range(0, i + 1))}
+
+    d = Dataset.from_generator(test_dataset_generator)
+    fn_kwargs = {}
+    fn_kwargs["column_name"] = "input"
+    fn_kwargs["max_length"] = 61
+
+    filtered = d.filter(skip_large_text, fn_kwargs=fn_kwargs)
+    assert len(filtered) == 60

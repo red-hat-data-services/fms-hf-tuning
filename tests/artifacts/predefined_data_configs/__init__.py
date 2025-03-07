@@ -49,3 +49,9 @@ DATA_CONFIG_DUPLICATE_COLUMNS = os.path.join(
 DATA_CONFIG_RENAME_RETAIN_COLUMNS = os.path.join(
     PREDEFINED_DATA_CONFIGS, "rename_retain_columns.yaml"
 )
+DATA_CONFIG_TOKENIZE_AND_TRAIN_WITH_HANDLER = os.path.join(
+    PREDEFINED_DATA_CONFIGS, "tokenize_using_handler_and_train.yaml"
+)
+DATA_CONFIG_SKIP_LARGE_TEXT_HANDLER = os.path.join(
+    PREDEFINED_DATA_CONFIGS, "skip_large_text_data_handler_template.yaml"
+)
