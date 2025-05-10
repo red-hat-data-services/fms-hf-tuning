@@ -7,10 +7,9 @@ metadata:
     build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: |
-      event == "pull_request" 
-      && target_branch == "v1.2.2"
-      && ( !".tekton/**".pathChanged() || ".tekton/fms-hf-tuning-v122-pull-request.yaml".pathChanged() )
+    pipelinesascode.tekton.dev/on-cel-expression: "event == \"pull_request\" \n&&
+      target_branch == \"v1.2.2\"\n&& ( !\".tekton/**\".pathChanged() || \".tekton/fms-hf-tuning-v122-pull-request.yaml\".pathChanged()
+      )\n"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: fms-hf-tuning
@@ -461,7 +460,8 @@ spec:
       optional: true
     - name: netrc
       optional: true
-  taskRunTemplate: {}
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-fms-hf-tuning-v122
   workspaces:
   - name: workspace
     volumeClaimTemplate:
@@ -478,4 +478,3 @@ spec:
     secret:
       secretName: '{{ git_auth_secret }}'
 status: {}
-#restart
