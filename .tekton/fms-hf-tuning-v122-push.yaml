@@ -6,10 +6,9 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression:  |
-      event == "pull_request" 
-      && target_branch == "v1.2.2"
-      && ( !".tekton/**".pathChanged() || ".tekton/fms-hf-tuning-v122-push.yaml".pathChanged() )
+    pipelinesascode.tekton.dev/on-cel-expression: "event == \"pull_request\" \n&&
+      target_branch == \"v1.2.2\"\n&& ( !\".tekton/**\".pathChanged() || \".tekton/fms-hf-tuning-v122-push.yaml\".pathChanged()
+      )\n"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: fms-hf-tuning
@@ -418,8 +417,8 @@ spec:
       - name: IMAGE
         value: $(tasks.build-image-index.results.IMAGE_URL)
       - name: ADDITIONAL_TAGS
-        value: 
-          - '{{target_branch}}-{{revision}}'  
+        value:
+        - '{{target_branch}}-{{revision}}'
       runAfter:
       - build-image-index
       taskRef:
@@ -461,7 +460,8 @@ spec:
       optional: true
     - name: netrc
       optional: true
-  taskRunTemplate: {}
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-fms-hf-tuning-v122
   workspaces:
   - name: workspace
     volumeClaimTemplate:
