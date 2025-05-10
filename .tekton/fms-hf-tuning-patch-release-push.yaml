@@ -4,9 +4,9 @@ metadata:
   annotations:
     build.appstudio.openshift.io/repo: https://github.com/red-hat-data-services/fms-hf-tuning?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
-    pipelinesascode.tekton.dev/on-target-branch: "[refs/tags/*]"
-    pipelinesascode.tekton.dev/on-event: "[push]"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/on-event: '[push]'
+    pipelinesascode.tekton.dev/on-target-branch: '[refs/tags/*]'
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: fms-hf-tuning
@@ -25,7 +25,7 @@ spec:
   - name: dockerfile
     value: build/Dockerfile
   - name: tag-name
-    value: '' 
+    value: ""
   pipelineSpec:
     finally:
     - name: show-sbom
@@ -120,8 +120,8 @@ spec:
       description: Path to a file with build arguments for buildah, see https://www.mankier.com/1/buildah-build#--build-arg-file
       name: build-args-file
       type: string
-    - name: tag-name
-      description: Git tag name
+    - description: Git tag name
+      name: tag-name
     results:
     - description: ""
       name: IMAGE_URL
@@ -138,11 +138,15 @@ spec:
     tasks:
     - name: get-tag-name
       taskSpec:
+        metadata: {}
         results:
-        - name: tag-name
-          description: Name of the git tag
+        - description: Name of the git tag
+          name: tag-name
+        spec: null
         steps:
-        - image: registry.access.redhat.com/ubi9/ubi
+        - computeResources: {}
+          image: registry.access.redhat.com/ubi9/ubi
+          name: ""
           script: |
             tag_name=$(basename {{target_branch}})
             echo -n "${tag_name}" | tee "$(results.tag-name.path)"
@@ -429,8 +433,8 @@ spec:
       - name: IMAGE
         value: $(tasks.build-image-index.results.IMAGE_URL)
       - name: ADDITIONAL_TAGS
-        value: 
-          - $(tasks.get-tag-name.results.tag-name)
+        value:
+        - $(tasks.get-tag-name.results.tag-name)
       runAfter:
       - build-image-index
       taskRef:
@@ -472,7 +476,8 @@ spec:
       optional: true
     - name: netrc
       optional: true
-  taskRunTemplate: {}
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-fms-hf-tuning-patch-release
   workspaces:
   - name: workspace
     volumeClaimTemplate:
