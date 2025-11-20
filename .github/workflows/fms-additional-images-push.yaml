@@ -1,0 +1,79 @@
+name: Add FMS-HF-Tuning image to additional image list
+
+on:
+  workflow_dispatch:
+    inputs:
+      rhoai-release-version:
+        type: string
+        required: true
+        description: 'RHOAI Version number (for example: 2.11)'
+
+env:
+  REPO_NAME: rhoai-additional-images
+  REPO_OWNER: redhat-data-services
+  GITHUB_TOKEN: ${{ secrets.CODEFLARE_MACHINE_ACCOUNT_TOKEN }}
+  RHOAI_VERSION: ${{ github.event.inputs.rhoai-release-version }}
+  UPDATE_BRANCH: rhoai-${{ github.event.inputs.rhoai-release-version }}-add-fms-hf-image
+  RHOAI_BRANCH: rhoai-${{ github.event.inputs.rhoai-release-version }}
+  IMAGE_BASE: modh
+  IMAGE_REPO: fms-hf-tuning
+
+jobs:
+  append-fms-image-list:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'redhat-data-services/rhoai-additional-images'
+          ref: rhoai-${{ github.event.inputs.rhoai-release-version }}
+          token: ${{ secrets.CODEFLARE_MACHINE_ACCOUNT_TOKEN }}
+
+      - name: Login to Quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_ID }} # DEV COMMENT: Add Quay secrets to rhds/fms-hf-tuning repo
+          password: ${{ secrets.QUAY_TOKEN }}
+      
+      - name: Perform tests
+        run: | 
+          echo "Performing functional tests"
+
+      - name: Update image list
+        run: |
+          echo "Creating updated image list Pull Request"
+          git config --global user.email "138894154+codeflare-machine-account@users.noreply.github.com"
+          git config --global user.name "codeflare-machine-account"
+          git checkout -b $UPDATE_BRANCH
+          # Update the image list to include the fms-hf-tuning release image
+          export IMAGE_SHA=$(podman pull --quiet quay.io/$IMAGE_BASE/$IMAGE_REPO:release)
+          sed -i "/additional-images:/a\- quay.io/$IMAGE_BASE/$IMAGE_REPO@sha256:${IMAGE_SHA}" rhoai-disconnected-images.yaml
+      
+      - name: Push changes
+        run: |
+          git add .
+          git commit -am "Updated rhoai-disconnected-images.yaml with latest fms-hf-tuning release image" --signoff
+          git push origin $UPDATE_BRANCH
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$REPO_OWNER/$REPO_NAME.git
+
+      - name: Create Pull Request
+        run: |
+          # Create a PR to the given rhoai-xxx branch
+          gh pr create --repo $REPO_OWNER/$REPO_NAME \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --head "$REPO_OWNER:$UPDATE_BRANCH" \
+            --base "$RHOAI_BRANCH"
+        env:
+          PR_TITLE: "Update rhoai-disconnected-images.yaml with latest fms-hf-tuning release image"
+          PR_BODY: | 
+            This is an automated Pull Request.
+
+            This PR appends the lateset fms-hf-tuning image to the list of additional disconnected image examples
+
+      - name: Tag RHOAI image
+        run: |
+          # Tag the release image with the given RHOAI release and push to quay
+          podman tag quay.io/$IMAGE_BASE/$IMAGE_REPO:release quay.io/$IMAGE_BASE/$IMAGE_REPO:$RHOAI_BRANCH
+          podman push quay.io/$IMAGE_BASE/$IMAGE_REPO:$RHOAI_BRANCH
